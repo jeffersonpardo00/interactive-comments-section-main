@@ -17,11 +17,14 @@ class ProtoComment {
 
 class Comment extends ProtoComment {
 
-    constructor(comment, section){
+    constructor(comment){
         super(comment.id, comment.content, comment.createdAt, comment.user, comment.score);
         this.replies = comment.replies;
-        this.section = section;
+       // this.section = section;
         this.commentDOM = new CommentDOM(comment);
+        this.drawComment();
+       
+        
     }
 
    eventHandler(e){
@@ -32,9 +35,19 @@ class Comment extends ProtoComment {
             if( e.target.parentElement.matches("button") ){
                 targetElement = e.target.parentElement;
             }
-            console.log(targetElement.dataset);
 
             const type = targetElement.dataset.type;
+
+            const commentInteraction = new CustomEvent(
+                'commentInteraction', 
+                {
+                    detail: {
+                        type:"plus"
+                    }
+                }
+            );
+
+            document.dispatchEvent(commentInteraction);
 
             switch(type)
             {
@@ -53,19 +66,17 @@ class Comment extends ProtoComment {
 
    vote(element){
        this.score ++;
-    console.log(this.score);
-    //console.log(element);
+       const scoreNumElement = this.commentDOM.getScoreNumELement;
+       console.log(this);
+       scoreNumElement.innerHTML = this.score;
    }
 
-   DrawSection = () => {
-
-    this.commentDOM.createCommentSection();
+   drawComment = () => {
 
     this.commentDOM.sectionDOM.addEventListener("click", (e)=>{
         this.eventHandler(e);
     });
 
-    this.section.appendChild(this.commentDOM.sectionDOM);
     
     }
 
@@ -80,12 +91,62 @@ class reply extends ProtoComment {
 
 class CommentSection {
 
-    constructor(comments){
-        this.comments = comments;
+    constructor(commentsString, parent){
+        this.parent = parent;
+        this.comments = [];
+        this.initializeSection(commentsString);
     }
 
+     initializeSection(commentsString)
+    { 
+        commentsString.comments.forEach(
+        (comment) => {
+            const newComment = new Comment (
+                comment
+            );
+            this.comments.push(newComment);
+        });
+
+        this.comments.forEach(
+            (comment) => {
+                this.parent.appendChild(comment.commentDOM.sectionDOM);
+            });
+    
+            document.addEventListener("commentInteraction", (e)=>{
+                if(e.detail.type === "plus"){
+                  //  this.reDrawSection();
+                }
+            });
+    }
+
+    drawSection(){
+    
+        this.comments.sort((a,b)=>{
+            return b.score - a.score;
+        });
+
+        this.comments.forEach(
+            (comment) => {
+                this.parent.appendChild(comment.commentDOM.sectionDOM);
+            });
+
+    }
+
+    removeAllChildNodes() {
+        while (this.parent.firstChild) {
+            this.parent.removeChild(this.parent.firstChild);
+        }
+    }
+
+    reDrawSection(){
+        this.removeAllChildNodes();
+        this.drawSection();
+        
+    }
 
 }
+
+
 
 const main = async () =>
 {
@@ -98,72 +159,18 @@ const main = async () =>
         return data;
     }
 
-    commentsStringOld = await getComments();
-    
-    commentList (commentsStringOld);
+    let commentsStringOld = await getComments();
+    const sectionDOM = document.getElementById("comments");
+
+   // console.log(commentsStringOld);
+    const commentSection = new CommentSection(commentsStringOld,sectionDOM);
+    //commentSection.drawSection.apply(this);
+    commentSection.drawSection();
 
     
-    
-
-
-
-   // const commentSection = new CommentSection(comments, "comments");
-   // commentSection.drawCommentsSeccion();
-
-    //console.log(comments);
 
 }
 
-function commentList (commentsString) {
-
-    const Section = document.getElementById("comments");
-    commentsString.comments.forEach(
-    (comment) => {
-    const newComment = new Comment (
-        comment, Section
-    );
-    comments.push(newComment);
-
-    newComment.DrawSection();
-    });
-
-}
-
-///-----------------------------------
-
-let commentsStringOld;
-let comments = [];
-
-function removeAllChildNodes(parent) {
-    while (parent.firstChild) {
-        parent.removeChild(parent.firstChild);
-    }
-}
-
-const Seccion = document.getElementById("actualizar");
-const updateBotton =  document.createElement("button");
-updateBotton.innerHTML = "actualizar";
-
-updateBotton.addEventListener("click", (e)=>{
-
-    const Section = document.getElementById("comments");
-
-    console.log(comments);
-
-    removeAllChildNodes(Section);
-
-    comments.sort((a,b)=>{
-        return b.score - a.score;
-    });
-    
-    comments.forEach(
-    (comment) => {
-        comment.DrawSection();
-    });
-
-});
-
-Seccion.appendChild(updateBotton);
 
 main();
 

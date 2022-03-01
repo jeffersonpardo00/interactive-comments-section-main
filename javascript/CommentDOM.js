@@ -6,37 +6,26 @@ class CommentDOM {
     constructor(comment){
         this.comment = comment;
         this.sectionDOM = {};
-       // this.bottons = [];
-       // this.createCommentSection();
-       this.plus = [];
-       
+        this.scoreNumElement = {};
+        this.createCommentBlock();
     }
 
+    get getScoreNumELement(){
+        return this.scoreNumElement;
+    }
     
-    createButton (clase, icon = null , text = null){
+    createButton (clase, type = null , text = null){
 
         const element =  document.createElement("button");
         element.classList.add(clase);
 
-        if(icon){
+        if(type){
             const iconElement =  document.createElement("i");
-            switch (icon){
+            switch (type){
                 case "plus":
                     iconElement.classList.add("fa-solid");
                     iconElement.classList.add("fa-plus");
-                  /*  element.addEventListener("click", ()=>{
-
-                       const commentInteraction = new CustomEvent(
-                            'commentInteraction', {botton: "plus"}
-                        );
-                        element.dispatchEvent(commentInteraction);
-
-                       
-
-                   });*/
-                   element.dataset.type = "plus";
-                   this.plus.push(element);
-                    
+                    element.dataset.type = "plus";
                 break;
                 case "minus":
                     iconElement.classList.add("fa-solid");
@@ -114,6 +103,7 @@ class CommentDOM {
         const scoreElement = this.createElement("div", "comment__score");
         const plus = this.createButton("comment__score-botton","plus");
         const scoreNum = this.createElement("span", "comment__score-num",score);
+        this.scoreNumElement = scoreNum;
         const minus = this.createButton("comment__score-botton","minus");
         const reply = this.createElement("div", "comment__reply");
         const replybutton= this.createButton("comment__reply-botton","reply","Reply");
@@ -121,6 +111,7 @@ class CommentDOM {
             scoreElement.appendChild(plus);
             scoreElement.appendChild(scoreNum);
             scoreElement.appendChild(minus);
+            
 
             reply.appendChild(replybutton);
 
@@ -148,7 +139,7 @@ class CommentDOM {
         return article;
     }
 
-    createCommentSection(){
+    createCommentBlock(){
 
         const commentSection =  this.createElement("section", "comment-section");
         const commentMain =  this.createElement("section", "comment-section__main");
@@ -168,8 +159,6 @@ class CommentDOM {
             commentSection.appendChild(commentThread);
         }
         
-       // return commentSection
-       
         this.sectionDOM = commentSection;
     }
 
