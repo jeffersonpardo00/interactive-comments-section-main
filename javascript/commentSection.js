@@ -1,6 +1,6 @@
 "use strict";
 
-import CommentDOM from './CommentDOM.js';
+import { CommentDOM, ReplyDOM,  ReplyThreadDOM } from './CommentDOM.js';
 
 
 class ProtoComment {
@@ -11,22 +11,153 @@ class ProtoComment {
         this.createdAt = createdAt;
         this.user = user;
         this.score = score;
+        this.hasVoted = false;
+    }
+
+   
+}
+
+class Reply extends ProtoComment {
+    constructor(reply, commentParentId){
+        super(reply.id, reply.content, reply.createdAt, reply.user, reply.score);
+        this.replyingTo = reply.replyingTo;
+        this.commentParentId = commentParentId;
+        this.replyDOM = new ReplyDOM(reply,commentParentId);
+       // console.log(commentParentId);
+    }
+
+    upVote(){
+        if(!this.hasVoted){
+            this.score ++;
+            const scoreNumElement = this.replyDOM.getScoreNumELement.scoreNum;
+            scoreNumElement.innerHTML = this.score;
+            this.hasVoted = true;
+        }
+    }
+
+}
+
+class ReplySection {
+
+    constructor(repliesString, commentParentId){
+        this.parent = parent;
+        this.commentParentId = commentParentId;
+        this.replies = [];
+        this.replyThreadDOM = {};
+        this.initializeSection(repliesString);
+    }
+/*
+    eventHandler(e){
+
+            if(e.target.matches("button")||e.target.parentElement.matches("button"))
+            {
+                let targetElement = e.target;
+                if( e.target.parentElement.matches("button") ){
+                    targetElement = e.target.parentElement;
+                }
+                console.log(targetElement);
+                const type = targetElement.dataset.type;
+    
+                const replyInteraction = new CustomEvent(
+                    'replyInteraction', 
+                    {
+                        detail: {
+                            type:"plus"
+                        }
+                    }
+                );
+    
+                document.dispatchEvent(replyInteraction);
+    
+                switch(type)
+                {
+                    case "plus":
+                     //   this.upVote(targetElement)
+                    break;
+                    default:
+                    //    console.log(type);
+                    break;
+                }
+                
+                
+            }
+            
+       }*/
+
+     initializeSection(repliesString)
+    { 
+        repliesString.forEach(
+        (reply) => {
+            
+            const newReply = new Reply (
+                reply, this.commentParentId
+
+            );
+            this.replies.push(newReply);
+           
+        });
+        this.drawSection();
+    }
+
+    drawSection(){
+    
+        this.replies.sort((a,b)=>{
+            return b.score - a.score;
+        });
+
+        this.replyThreadDOM =  new ReplyThreadDOM(this.replies);
+
+           /* this.replyThreadDOM.threadDOM.addEventListener("click", (e)=>{
+                e.stopPropagation();
+                //this.eventHandler(e);
+            });*/
+       
+        
+
+    }
+
+    removeAllChildNodes() {
+        while (this.parent.firstChild) {
+            this.parent.removeChild(this.parent.firstChild);
+        }
+    }
+
+    reDrawSection(){
+        this.removeAllChildNodes();
+        this.drawSection();
+        
+    }
+
+    voteReply(idReply){
+        console.log(`voteReply ${idReply}`);
+        const selectedElement = this.replies.find( reply => reply.id == idReply );
+        selectedElement.upVote();
     }
 
 }
 
 class Comment extends ProtoComment {
 
-    constructor(comment){
-        super(comment.id, comment.content, comment.createdAt, comment.user, comment.score);
-        this.replies = comment.replies;
-       // this.section = section;
-        this.commentDOM = new CommentDOM(comment);
+    constructor(commentIn){
+        super(commentIn.id, commentIn.content, commentIn.createdAt, commentIn.user, commentIn.score);
+        this.replySection = {};
+        this.initializeReplySection(commentIn.replies,commentIn.id);
+        this.commentDOM = new CommentDOM(commentIn);
         this.drawComment();
-       
         
     }
 
+    upVote(){
+        if(!this.hasVoted){
+            this.score ++;
+            console.log(`upVote ${this.score}`);
+            const scoreNumElement = this.commentDOM.getScoreNumELement.scoreNum;
+            scoreNumElement.innerHTML = this.score;
+            this.hasVoted = true;
+        }
+    }
+
+/*
    eventHandler(e){
 
         if(e.target.matches("button")||e.target.parentElement.matches("button"))
@@ -35,6 +166,8 @@ class Comment extends ProtoComment {
             if( e.target.parentElement.matches("button") ){
                 targetElement = e.target.parentElement;
             }
+
+            console.log(targetElement);
 
             const type = targetElement.dataset.type;
 
@@ -52,10 +185,10 @@ class Comment extends ProtoComment {
             switch(type)
             {
                 case "plus":
-                    this.vote(targetElement)
+                   // this.upVote(targetElement)
                 break;
                 default:
-                    console.log(type);
+                   // console.log(type);
                 break;
             }
             
@@ -64,30 +197,32 @@ class Comment extends ProtoComment {
         
    }
 
-   vote(element){
+   upVote(element){
        this.score ++;
        const scoreNumElement = this.commentDOM.getScoreNumELement;
-       console.log(this);
+      // console.log(this);
        scoreNumElement.innerHTML = this.score;
-   }
-
-   drawComment = () => {
-
-    this.commentDOM.sectionDOM.addEventListener("click", (e)=>{
-        this.eventHandler(e);
-    });
+   }*/
 
     
+
+   initializeReplySection(repliesIn,commentId)
+    { 
+       
+        this.replySection = new ReplySection(repliesIn,commentId);
+    }
+
+   drawComment(){
+       
+        this.commentDOM.appendReplyThread(this.replySection.replyThreadDOM.threadDOM);
+       /* this.commentDOM.sectionDOM.addEventListener("click", (e)=>{
+            this.eventHandler(e);
+        });*/
+
     }
 
 }
 
-class reply extends ProtoComment {
-    constructor(comment){
-        super(comment.id, comment.content, comment.createdAt, comment.user);
-        this.replyingTo = comment.replyingTo;
-    }
-}
 
 class CommentSection {
 
@@ -96,6 +231,54 @@ class CommentSection {
         this.comments = [];
         this.initializeSection(commentsString);
     }
+
+    eventHandler(e){
+        
+        if(e.target.matches("button")||e.target.parentElement.matches("button"))
+        {
+            let targetElement = e.target;
+            if( e.target.parentElement.matches("button") ){
+                targetElement = e.target.parentElement;
+            }
+
+            const type = targetElement.dataset.type;
+            const id = targetElement.dataset.id;
+            const parentId = targetElement.dataset.parentId;
+            
+
+            switch(type)
+            {
+                case "upVote":
+                    this.upVote(id,parentId)
+                break;
+                case "downVote":
+                    this.upVote(id,parentId)
+                break;
+                default:
+                   // console.log(type);
+                break;
+            }
+            
+        }
+        
+   }
+
+   upVote(id,parentId){
+
+    let selectedElement = {};
+
+        if(parentId){
+           const selectedParend = this.comments.find( comment => comment.id == parentId );
+           selectedElement = selectedParend.replySection;
+           selectedElement.voteReply(id);
+        }else{
+            selectedElement = this.comments.find( comment => comment.id == id );
+            selectedElement.upVote();
+        }
+
+   }
+
+
 
      initializeSection(commentsString)
     { 
@@ -112,10 +295,8 @@ class CommentSection {
                 this.parent.appendChild(comment.commentDOM.sectionDOM);
             });
     
-            document.addEventListener("commentInteraction", (e)=>{
-                if(e.detail.type === "plus"){
-                  //  this.reDrawSection();
-                }
+            parent.addEventListener("click", (e)=>{
+                this.eventHandler(e);
             });
     }
 
@@ -145,6 +326,8 @@ class CommentSection {
     }
 
 }
+
+
 
 
 

@@ -1,35 +1,40 @@
 
+class ProtoCommentDOM  {
 
-
-class CommentDOM {
-
-    constructor(comment){
-        this.comment = comment;
+    constructor(inID, InParentId =""){
         this.sectionDOM = {};
-        this.scoreNumElement = {};
-        this.createCommentBlock();
+        this.id = inID;
+        this.parentId = InParentId;
+
+        //----------ReactiveElements------------
+        this.scoreElement = {}; 
+
     }
 
     get getScoreNumELement(){
-        return this.scoreNumElement;
+        return this.scoreElement;
     }
     
     createButton (clase, type = null , text = null){
 
         const element =  document.createElement("button");
         element.classList.add(clase);
+        element.dataset.id = this.id;
+        element.dataset.parentId =  this.parentId;
 
         if(type){
             const iconElement =  document.createElement("i");
             switch (type){
-                case "plus":
+                case "upVote":
                     iconElement.classList.add("fa-solid");
                     iconElement.classList.add("fa-plus");
-                    element.dataset.type = "plus";
+                    element.dataset.type = "upVote";
                 break;
-                case "minus":
+                case "downVote":
                     iconElement.classList.add("fa-solid");
                     iconElement.classList.add("fa-minus");
+                    element.dataset.type = "downVote";
+
                 break;
                 case "reply":
                     iconElement.classList.add("fa-solid");
@@ -101,16 +106,18 @@ class CommentDOM {
     createFooter(score){
         const footer =  this.createElement("footer", "comment__footer");
         const scoreElement = this.createElement("div", "comment__score");
-        const plus = this.createButton("comment__score-botton","plus");
+        const upVote = this.createButton("comment__score-botton","upVote");
         const scoreNum = this.createElement("span", "comment__score-num",score);
-        this.scoreNumElement = scoreNum;
-        const minus = this.createButton("comment__score-botton","minus");
+        const downVote = this.createButton("comment__score-botton","downVote");
+
+        this.scoreElement = {upVote:upVote, scoreNum: scoreNum, downVote: downVote};
+
         const reply = this.createElement("div", "comment__reply");
         const replybutton= this.createButton("comment__reply-botton","reply","Reply");
 
-            scoreElement.appendChild(plus);
+            scoreElement.appendChild(upVote);
             scoreElement.appendChild(scoreNum);
-            scoreElement.appendChild(minus);
+            scoreElement.appendChild(downVote);
             
 
             reply.appendChild(replybutton);
@@ -124,7 +131,7 @@ class CommentDOM {
     createCommentBox( localcomment, replyingTo = null){
 
         const article =  document.createElement("article");
-        article.id = `comment_${this.comment.id}`;
+        article.id = `comment_${localcomment.id}`;
         article.classList.add("comment");
         
         const header = this.createHeader(localcomment.user, localcomment.createdAt);
@@ -138,6 +145,18 @@ class CommentDOM {
 
         return article;
     }
+    
+}
+
+
+class CommentDOM extends ProtoCommentDOM {
+
+    constructor(comment){
+        super(comment.id);
+        this.comment = comment;
+        this.commentThread = {};
+        this.createCommentBlock();
+    }
 
     createCommentBlock(){
 
@@ -148,7 +167,7 @@ class CommentDOM {
             commentMain.appendChild(commentArticle);
         commentSection.appendChild(commentMain);
 
-        if(this.comment.replies.length > 0){
+       /* if(this.comment.replies.length > 0){
             const commentThread =  this.createElement("section", "comment-section__thread");
             
             this.comment.replies.forEach(
@@ -157,12 +176,72 @@ class CommentDOM {
                     commentThread.appendChild(replyElement);
                 });
             commentSection.appendChild(commentThread);
-        }
+        }*/
         
+
         this.sectionDOM = commentSection;
+        
     }
+
+    appendReplyThread(replyThread){
+        this.sectionDOM.appendChild(replyThread);
+    }
+
+    
+}
+
+class ReplyDOM extends ProtoCommentDOM {
+
+    constructor(reply, commentParentId){
+        super(reply.id, commentParentId);
+        this.reply = reply;
+        this.createReplyBlock();
+    }
+
+    createReplyBlock(){
+        const commentArticle = this.createCommentBox(this.reply, this.reply.replyingTo);
+        this.sectionDOM = commentArticle;
+    }
+
+}
+
+
+class ReplyThreadDOM {
+
+    constructor(replies){
+        this.threadDOM = {};
+        this.replies = replies;
+        this.createReplyThread();
+      //  console.log(replies);
+    }
+
+    createElement(elementType, clase, text = null){
+
+        const element =  document.createElement(elementType);
+        element.classList.add(clase);
+        if(text){
+            element.innerHTML = text;
+        }else if (text===0){
+            element.innerHTML = text;
+        }
+        return element;
+
+    }
+
+    createReplyThread(){
+
+        const commentThread =  this.createElement("section", "comment-section__thread");
+        if(this.replies.length > 0){
+            this.replies.forEach(
+                (reply) => {
+                    commentThread.appendChild(reply.replyDOM.sectionDOM);
+                });
+        }
+        this.threadDOM = commentThread;
+    }
+
 
 
 }
 
-export default CommentDOM;
+export { CommentDOM, ReplyDOM,  ReplyThreadDOM };
