@@ -39,6 +39,7 @@ class ProtoCommentDOM  {
                 case "reply":
                     iconElement.classList.add("fa-solid");
                     iconElement.classList.add("fa-reply");
+                    element.dataset.type = "reply";
                 break;
             } 
             element.appendChild(iconElement);
@@ -109,7 +110,7 @@ class ProtoCommentDOM  {
         const upVote = this.createButton("comment__score-botton","upVote");
         const scoreNum = this.createElement("span", "comment__score-num",score);
         const downVote = this.createButton("comment__score-botton","downVote");
-
+        downVote.classList.add("deactivateVote");
         this.scoreElement = {upVote:upVote, scoreNum: scoreNum, downVote: downVote};
 
         const reply = this.createElement("div", "comment__reply");
@@ -148,7 +149,6 @@ class ProtoCommentDOM  {
     
 }
 
-
 class CommentDOM extends ProtoCommentDOM {
 
     constructor(comment){
@@ -166,18 +166,6 @@ class CommentDOM extends ProtoCommentDOM {
 
             commentMain.appendChild(commentArticle);
         commentSection.appendChild(commentMain);
-
-       /* if(this.comment.replies.length > 0){
-            const commentThread =  this.createElement("section", "comment-section__thread");
-            
-            this.comment.replies.forEach(
-                (reply) => {
-                    const replyElement = this.createCommentBox(reply, reply.replyingTo);
-                    commentThread.appendChild(replyElement);
-                });
-            commentSection.appendChild(commentThread);
-        }*/
-        
 
         this.sectionDOM = commentSection;
         
@@ -211,8 +199,13 @@ class ReplyThreadDOM {
     constructor(replies){
         this.threadDOM = {};
         this.replies = replies;
+        this.parent = {};
         this.createReplyThread();
       //  console.log(replies);
+    }
+
+    get parentThread(){
+        return this.parent;
     }
 
     createElement(elementType, clase, text = null){
@@ -231,10 +224,11 @@ class ReplyThreadDOM {
     createReplyThread(){
 
         const commentThread =  this.createElement("section", "comment-section__thread");
+        this.parent = commentThread;
         if(this.replies.length > 0){
             this.replies.forEach(
                 (reply) => {
-                    commentThread.appendChild(reply.replyDOM.sectionDOM);
+                    commentThread.appendChild(reply.thisDOM.sectionDOM);
                 });
         }
         this.threadDOM = commentThread;
