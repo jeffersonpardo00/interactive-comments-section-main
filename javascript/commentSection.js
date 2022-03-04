@@ -1,8 +1,27 @@
 "use strict";
 
-import { CommentDOM, ReplyDOM,  ReplyThreadDOM } from './CommentDOM.js';
+import { CommentDOM, ReplyDOM,  ReplyThreadDOM, ReplyInputDOM } from './CommentDOM.js';
 
+let  currentUser = {};
+/*
+class ReplyInput {
+    constructor(inId,inParentId,inUserName){
+        this.InputDOM = {};
+        this.content = "";
+        
+        this.ParentId = inParentId;
+        this.ParentUserName = inUserName;
+        this.textAreaId = `replyTo_${inUserName}_${inParentId}`;
+        this.initializeReplyInput();
+    }
 
+    initializeReplyInput(){
+        this.InputDOM = new ReplyInputDOM(this.ParentId, this.ParentUserName, this.textAreaId);
+        this.content = "Texto escrito por el usuario";
+    }
+
+}
+*/
 class ProtoComment {
 
     constructor(InProtoComment){
@@ -13,6 +32,8 @@ class ProtoComment {
         this.score = InProtoComment.score;
         this.thisDOM = {};
         this.hasVoted = false;
+        this.thisMainDOM = {};
+        this.replyInput = {};
     }
 
     voteActions(){
@@ -38,7 +59,11 @@ class ProtoComment {
         }
     }
 
-   
+    deleteReplyInput(){
+        this.replyInput.sectionDOM.remove();
+        this.replyInput = null;
+    }
+    
 }
 
 class Reply extends ProtoComment {
@@ -57,14 +82,19 @@ class Reply extends ProtoComment {
         this.commentParentId = commentParentId;
         
         this.initializeReply(InReply,commentParentId);
-       // console.log(commentParentId);
     }
 
     initializeReply(InReply,commentParentId){
         this.thisDOM = new ReplyDOM(InReply,commentParentId);
+        this.thisMainDOM = this.thisDOM.sectionDOM;
     }
 
-    
+    reply(){
+        this.replyInput = new ReplyInputDOM(this.id,this.commentParentId,this.user.username);
+        const replyInputDOM = this.replyInput.sectionDOM;
+        this.thisMainDOM.after(replyInputDOM);
+    }
+
 
 }
 
@@ -88,14 +118,25 @@ class Comment extends ProtoComment {
     
    initializeReplySection(repliesIn,commentId)
     { 
-       
         this.replySection = new ReplySection(repliesIn,commentId);
     }
 
     initializeComment(InProtoComment){
-
         this.thisDOM = new CommentDOM(InProtoComment);
+        this.thisMainDOM = this.thisDOM.getcommentArticleDOM;
         this.thisDOM.appendReplyThread(this.replySection.replyThreadDOM.threadDOM);
+    }
+
+    reply(){
+        this.replyInput = new ReplyInputDOM(this.id,this.id,this.user.username);
+        const replyInputDOM = this.replyInput.sectionDOM;
+        this.thisMainDOM.after(replyInputDOM);
+    }
+
+    sendReply (parentId, parentUserName, textAreaId)
+    {
+        this.replySection.addEditableReply(parentId, parentUserName, textAreaId);
+       
     }
 
 }
@@ -174,9 +215,42 @@ class ReplySection extends ProtoSection {
     replyReply(idReply)
     {
         const selectedElement = this.findInList(idReply);
-        console.log('replyReply');
-        console.log(selectedElement);
+        selectedElement.reply();
     }
+
+   addEditableReply(parentId, parentUserName, textAreaId){
+      
+        /*var ids = this.thisList.map(function(num) {
+            return Math.sqrt(num);
+        });*/
+
+        const newContent = document.getElementById(textAreaId);
+
+        const editableReplyObj =
+        {
+            id: 3,
+            content : newContent,
+            createdAt : "today",
+            score: 0,
+            replyingTo: parentUserName,
+            user: currentUser
+        };
+
+        const editableReply = new Reply (
+            editableReplyObj, parentId
+
+        );
+
+        console.log(editableReply);
+   }
+
+   deleteReplyInputFrom(id)
+    {
+        const selectedElement = this.findInList(id);
+        selectedElement.deleteReplyInput();
+
+    }
+
 
 }
 
@@ -201,6 +275,7 @@ class CommentSection extends ProtoSection {
             const id = targetElement.dataset.id;
             const parentId = targetElement.dataset.parentId;
             
+            
 
             switch(type)
             {
@@ -211,7 +286,12 @@ class CommentSection extends ProtoSection {
                     this.downVote(id,parentId)
                 break;
                 case "reply":
-                    this.replySelect(id,parentId)
+                    this.reply(id,parentId)
+                break;
+                case "sendReply":
+                    const textAreaId = targetElement.dataset.textAreaId;
+                    const parentUserName = targetElement.dataset.parentUserName;
+                    this.sendReply(id,parentId,parentUserName,textAreaId);
                 break;
                 default:
                     alert("No se reconoce la accion que estas probando");
@@ -254,25 +334,37 @@ class CommentSection extends ProtoSection {
 
    }
 
-   replySelect(id,parentId){
+   reply(id,parentId){
 
     let selectedElement = {};
 
-    if(parentId){
-       const selectedParend = this.findInList(parentId);
-       selectedElement = selectedParend.replySection;
-       selectedElement.replyReply(id);
-    }else{
-        selectedElement =  this.findInList(id);
-        this.reply(selectedElement);
-    }
+        if(parentId){
+        const selectedParend = this.findInList(parentId);
+        selectedElement = selectedParend.replySection;
+        selectedElement.replyReply(id);
+        }else{
+            selectedElement =  this.findInList(id);
+            selectedElement.reply();
+        }
 
    }
 
-   reply(selectedElement)
-   {
-       console.log('replyComment');
-       console.log(selectedElement);
+
+   sendReply(id,parentId, parentUserName, textAreaId){
+
+        const  selectedComment =  this.findInList(parentId);
+        selectedComment.sendReply(parentId,parentUserName, textAreaId);
+
+        if(id!==parentId)
+        {
+            const selectedParend = this.findInList(parentId);
+            const selectedReplySection = selectedParend.replySection;
+            selectedReplySection.deleteReplyInputFrom(id);
+        }else{
+            selectedComment.deleteReplyInput();
+        }
+
+
    }
 
 
@@ -312,6 +404,7 @@ class CommentSection extends ProtoSection {
 }
 
 
+
 const main = async () =>
 {
 
@@ -323,11 +416,12 @@ const main = async () =>
         return data;
     }
 
-    let commentsStringOld = await getComments();
+    let Initialcomments = await getComments();
     const sectionDOM = document.getElementById("comments");
 
-   // console.log(commentsStringOld);
-    const commentSection = new CommentSection(commentsStringOld,sectionDOM);
+   
+    currentUser = Initialcomments.currentUser;
+    const commentSection = new CommentSection(Initialcomments,sectionDOM);
     //commentSection.drawSection.apply(this);
     commentSection.drawSection();
 

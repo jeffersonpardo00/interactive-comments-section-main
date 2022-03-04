@@ -1,14 +1,31 @@
 
-class ProtoCommentDOM  {
+class CreateDOM {
+    constructor(){
+    }
+
+    createElement(elementType, clase, text = null){
+
+        const element =  document.createElement(elementType);
+        element.classList.add(clase);
+        if(text){
+            element.innerHTML = text;
+        }else if (text===0){
+            element.innerHTML = text;
+        }
+        return element;
+
+    }
+   
+}
+
+class ProtoCommentDOM extends CreateDOM  {
 
     constructor(inID, InParentId =""){
-        this.sectionDOM = {};
+        super();
         this.id = inID;
         this.parentId = InParentId;
-
-        //----------ReactiveElements------------
+        this.sectionDOM = {};
         this.scoreElement = {}; 
-
     }
 
     get getScoreNumELement(){
@@ -41,6 +58,9 @@ class ProtoCommentDOM  {
                     iconElement.classList.add("fa-reply");
                     element.dataset.type = "reply";
                 break;
+                case "sendReply":
+                    element.dataset.type = "sendReply";
+                break;
             } 
             element.appendChild(iconElement);
         }
@@ -51,19 +71,6 @@ class ProtoCommentDOM  {
             element.appendChild(textElement);
         }
 
-        return element;
-
-    }
-
-    createElement(elementType, clase, text = null){
-
-        const element =  document.createElement(elementType);
-        element.classList.add(clase);
-        if(text){
-            element.innerHTML = text;
-        }else if (text===0){
-            element.innerHTML = text;
-        }
         return element;
 
     }
@@ -155,7 +162,12 @@ class CommentDOM extends ProtoCommentDOM {
         super(comment.id);
         this.comment = comment;
         this.commentThread = {};
+        this.commentArticleDOM ={};
         this.createCommentBlock();
+    }
+
+    get getcommentArticleDOM(){
+        return this.commentArticleDOM;
     }
 
     createCommentBlock(){
@@ -166,6 +178,8 @@ class CommentDOM extends ProtoCommentDOM {
 
             commentMain.appendChild(commentArticle);
         commentSection.appendChild(commentMain);
+
+        this.commentArticleDOM = commentArticle;
 
         this.sectionDOM = commentSection;
         
@@ -194,9 +208,10 @@ class ReplyDOM extends ProtoCommentDOM {
 }
 
 
-class ReplyThreadDOM {
+class ReplyThreadDOM extends CreateDOM {
 
     constructor(replies){
+        super();
         this.threadDOM = {};
         this.replies = replies;
         this.parent = {};
@@ -208,18 +223,7 @@ class ReplyThreadDOM {
         return this.parent;
     }
 
-    createElement(elementType, clase, text = null){
-
-        const element =  document.createElement(elementType);
-        element.classList.add(clase);
-        if(text){
-            element.innerHTML = text;
-        }else if (text===0){
-            element.innerHTML = text;
-        }
-        return element;
-
-    }
+    
 
     createReplyThread(){
 
@@ -234,8 +238,68 @@ class ReplyThreadDOM {
         this.threadDOM = commentThread;
     }
 
+}
 
+class ReplyInputDOM extends CreateDOM {
+    constructor(inId, inParentId, inParentUserName, inTextAreaId){
+        super();
+        this.id = inId;
+        this.parentId = inParentId;
+        this.parentUserName = inParentUserName;
+        this.textAreaId = inTextAreaId;
+        this.sectionDOM = {};
+        this.createReplyInput();
+        
+    }
+
+    createButton (clase, type = null , text = null){
+
+        const element =  document.createElement("button");
+        element.classList.add(clase);
+       
+        element.dataset.id =  this.id;
+        element.dataset.parentId =  this.parentId;
+        element.dataset.parentUserName =  this.parentUserName;
+        element.dataset.textAreaId =  this.textAreaId;
+        
+
+        if(type){
+            const iconElement =  document.createElement("i");
+            switch (type){
+                case "sendReply":
+                    element.dataset.type = "sendReply";
+                break;
+            } 
+            element.appendChild(iconElement);
+        }
+
+        if(text){
+            const textElement =  document.createElement("span");
+            textElement.innerHTML = text;
+            element.appendChild(textElement);
+        }
+
+        return element;
+
+    }
+
+    createReplyInput(){
+        const ReplyInputSection =  this.createElement("section", "ReplyInput");
+        ReplyInputSection.style.backgroundColor = 'yellow';
+        ReplyInputSection.style.height = "90px";
+        ReplyInputSection.style.width = "100%";
+        
+        const buttonReply =  this.createButton ("ReplyInput__button", "sendReply" , "send");
+
+        const textArea =  this.createElement("textarea", "ReplyInput__textarea");
+        textArea.id = this.textAreaId;
+
+        ReplyInputSection.appendChild(textArea);
+        ReplyInputSection.appendChild(buttonReply);
+
+        this.sectionDOM = ReplyInputSection;
+    }
 
 }
 
-export { CommentDOM, ReplyDOM,  ReplyThreadDOM };
+export { CommentDOM, ReplyDOM,  ReplyThreadDOM, ReplyInputDOM };
