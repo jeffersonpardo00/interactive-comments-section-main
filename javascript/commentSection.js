@@ -1,6 +1,8 @@
 "use strict";
 
-import { CommentDOM, ReplyDOM,  ReplyThreadDOM, ReplyInputDOM } from './CommentDOM.js';
+import { CommentDOM, ReplyDOM,  ReplyThreadDOM, ReplyInputDOM, EditableReplyDOM } from './CommentDOM.js';
+
+let MaxId = 0;
 
 let  currentUser = {};
 /*
@@ -98,6 +100,19 @@ class Reply extends ProtoComment {
 
 }
 
+class EditableReply extends Reply {
+    constructor(InReply, commentParentId){
+        super(InReply, commentParentId);
+        this.initializeReply(InReply,commentParentId);
+    }
+
+    initializeReply(InReply,commentParentId){
+        this.thisDOM = new EditableReplyDOM(InReply,commentParentId);
+        this.thisMainDOM = this.thisDOM.sectionDOM;
+    }
+
+}
+
 class Comment extends ProtoComment {
 
     constructor(commentIn){
@@ -112,7 +127,7 @@ class Comment extends ProtoComment {
         this.replySection = {};
         this.initializeReplySection(commentIn.replies,commentIn.id);
         this.initializeComment(InProtoComment);
-        
+        this.protoComment = InProtoComment;
     }
 
     
@@ -137,6 +152,18 @@ class Comment extends ProtoComment {
     {
         this.replySection.addEditableReply(parentId, parentUserName, textAreaId);
        
+    }
+    reDraw(){
+        const replyList = this.replySection.thisList;
+        console.log(replyList);
+        this.replySection.replyThreadDOM.threadDOM.remove();
+        this.replySection = {};
+        this.replySection = new ReplySection(replyList,this.id);
+        this.thisDOM.sectionDOM.remove();
+        this.thisDOM = new CommentDOM(this.protoComment);
+        this.thisMainDOM = this.thisDOM.getcommentArticleDOM;
+        this.thisDOM.appendReplyThread(this.replySection.replyThreadDOM.threadDOM);
+
     }
 
 }
@@ -193,7 +220,10 @@ class ReplySection extends ProtoSection {
     }
 
     drawSection(){
-    
+        //console.log(this.replyThreadDOM);
+        if(Object.keys(this.replyThreadDOM).length !== 0){
+            this.replyThreadDOM={};
+        }
         this.sortDesc();
         this.replyThreadDOM =  new ReplyThreadDOM(this.thisList);
         this.parent =  this.replyThreadDOM.parentThread;
@@ -224,11 +254,11 @@ class ReplySection extends ProtoSection {
             return Math.sqrt(num);
         });*/
 
-        const newContent = document.getElementById(textAreaId);
-
+        const newContent = document.getElementById(textAreaId).value;
+        MaxId++;
         const editableReplyObj =
         {
-            id: 3,
+            id: MaxId,
             content : newContent,
             createdAt : "today",
             score: 0,
@@ -236,12 +266,22 @@ class ReplySection extends ProtoSection {
             user: currentUser
         };
 
-        const editableReply = new Reply (
+        const editableReply = new EditableReply (
             editableReplyObj, parentId
-
         );
 
-        console.log(editableReply);
+        
+        const editableReplyDOM = editableReply.thisDOM.sectionDOM;
+        this.replyThreadDOM.threadDOM.appendChild(editableReplyDOM);
+
+        const newReply = new Reply (
+            editableReplyObj, parentId
+        );
+        this.thisList.push(newReply);
+        
+        const event = new CustomEvent('reDraw',{ everything: true});
+        document.dispatchEvent(event);
+       
    }
 
    deleteReplyInputFrom(id)
@@ -364,20 +404,34 @@ class CommentSection extends ProtoSection {
             selectedComment.deleteReplyInput();
         }
 
+        
 
    }
 
 
     initializeSection(commentsString)
     { 
+        let idList = [];
+
         commentsString.comments.forEach(
         (comment) => {
             const newComment = new Comment (
                 comment
             );
             this.thisList.push(newComment);
+        
+            idList.push(comment.id)
+
+            const listAux = comment.replies.map( (com) =>
+                {
+                    return com.id
+                }
+            );
+            idList.push(listAux);
         });
 
+        MaxId = Math.max(...idList.flat())
+       
         this.drawSection();
     
         parent.addEventListener("click", (e)=>{
@@ -392,12 +446,18 @@ class CommentSection extends ProtoSection {
             (comment) => {
                 this.parent.appendChild(comment.thisDOM.sectionDOM);
             });
-
+        
     }
 
     reDrawSection(){
-        this.removeAllChildNodes();
-        this.drawSection();
+       // console.log(this.thisList);
+        //this.removeAllChildNodes();
+       // this.drawSection();
+       this.thisList.forEach(
+        (comment) => {
+            comment.reDraw();
+            this.parent.appendChild(comment.thisDOM.sectionDOM);
+        });
         
     }
 
@@ -407,6 +467,7 @@ class CommentSection extends ProtoSection {
 
 const main = async () =>
 {
+    
 
     const getComments = async ()=> {
 
@@ -424,13 +485,20 @@ const main = async () =>
     const commentSection = new CommentSection(Initialcomments,sectionDOM);
     //commentSection.drawSection.apply(this);
     commentSection.drawSection();
+    console.log(MaxId);
 
+    document.addEventListener("reDraw",(e)=>{
+       // console.log("reDraw");
+        commentSection.reDrawSection();
+    });
     
 
 }
 
+    main();
+    
 
-main();
+
 
 
 

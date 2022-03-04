@@ -205,8 +205,163 @@ class ReplyDOM extends ProtoCommentDOM {
         this.sectionDOM = commentArticle;
     }
 
+
 }
 
+class EditableReplyDOM extends CreateDOM {
+
+    constructor(reply, commentParentId){
+        super();
+        this.reply = reply;
+        this.textAreaId =  `editable_${reply.id}`;
+        this.parentId = commentParentId;
+        this.id = reply.id;
+        this.sectionDOM = {};
+        this.createReplyBlock();
+    }
+
+    createReplyBlock(){
+        const commentArticle = this.createEditableReplyBox(this.reply, this.reply.replyingTo);
+        this.sectionDOM = commentArticle;
+    }
+
+    createButton (clase, type = null , text = null){
+
+        const element =  document.createElement("button");
+        element.classList.add(clase);
+       
+        element.dataset.id =  this.id;
+        element.dataset.parentId =  this.parentId;
+        element.dataset.replyingTo =  this.reply.replyingTo;
+        element.dataset.textAreaId =  this.textAreaId;
+        
+
+        if(type){
+            const iconElement =  document.createElement("i");
+            switch (type){
+                case "upVote":
+                    iconElement.classList.add("fa-solid");
+                    iconElement.classList.add("fa-plus");
+                    element.dataset.type = "upVote";
+                break;
+                case "downVote":
+                    iconElement.classList.add("fa-solid");
+                    iconElement.classList.add("fa-minus");
+                    element.dataset.type = "downVote";
+
+                break;
+                case "reply":
+                    iconElement.classList.add("fa-solid");
+                    iconElement.classList.add("fa-reply");
+                    element.dataset.type = "reply";
+                break;
+                case "edit":
+                    element.dataset.type = "edit";
+                break;
+            } 
+            element.appendChild(iconElement);
+        }
+
+        if(text){
+            const textElement =  document.createElement("span");
+            textElement.innerHTML = text;
+            element.appendChild(textElement);
+        }
+
+        return element;
+
+    }
+
+    createMainContent(text, replyingTo = null){
+
+        const mainSection = this.createElement("p", "comment__content");
+        
+        const textArea = this.createElement("textarea", "comment__textarea");
+        textArea.id = this.textAreaId;
+        textArea.value = text;
+
+        mainSection.appendChild(textArea);
+
+        
+            const replyingToElement =  this.createElement("span", "comment__replyingTo");
+            replyingToElement.innerHTML = `@${replyingTo} `;
+            mainSection.prepend(replyingToElement);
+
+        
+
+        return mainSection;
+    }
+
+    createHeader(user, createdAt){
+
+        const header =  this.createElement("header", "comment__header");
+        const title = this.createElement("div", "comment__title");
+        const userElement = this.createElement("div", "comment__user");
+        const userPhoto = this.createElement("div", "comment__photo");
+        const userPhotoImg = this.createElement("img", "comment__photo-img");
+        userPhotoImg.src = user.image.png;
+        userPhotoImg.alt = `photo of ${user.username}`;
+        const name = this.createElement("h3", "comment__name", user.username);
+        const you = this.createElement("span", "comment__you", "you");
+        const date = this.createElement("p", "comment__date", createdAt);
+
+                    userPhoto.appendChild(userPhotoImg);
+                userElement.appendChild(userPhoto);
+                userElement.appendChild(name);
+                userElement.appendChild(you);
+            title.appendChild(userElement);
+            title.appendChild(date);
+        header.appendChild(title);
+        
+        return header;
+    }
+
+   
+
+    createEditableFooter(score){
+        const footer =  this.createElement("footer", "comment__footer");
+        const scoreElement = this.createElement("div", "comment__score");
+        const upVote = this.createButton("comment__score-botton","upVote");
+        const scoreNum = this.createElement("span", "comment__score-num",score);
+        const downVote = this.createButton("comment__score-botton","downVote");
+        downVote.classList.add("deactivateVote");
+        this.scoreElement = {upVote:upVote, scoreNum: scoreNum, downVote: downVote};
+
+        const edit = this.createElement("div", "comment__edit");
+        const editButton= this.createButton("comment__edit-botton","edit","edit");
+
+            scoreElement.appendChild(upVote);
+            scoreElement.appendChild(scoreNum);
+            scoreElement.appendChild(downVote);
+            
+
+            edit.appendChild(editButton);
+
+        footer.appendChild(scoreElement);
+        footer.appendChild(edit);
+
+        return footer;
+    }
+
+    createEditableReplyBox( localcomment, replyingTo = null){
+
+        const article =  document.createElement("article");
+        article.id = `comment_${localcomment.id}`;
+        article.classList.add("comment");
+        
+        const header = this.createHeader(localcomment.user, localcomment.createdAt);
+        article.appendChild(header);
+
+        const mainSection = this.createMainContent(localcomment.content, replyingTo);
+        article.appendChild(mainSection);
+
+        const footer = this.createEditableFooter(localcomment.score);
+        article.appendChild(footer);
+
+        return article;
+    }
+
+}
 
 class ReplyThreadDOM extends CreateDOM {
 
@@ -241,12 +396,12 @@ class ReplyThreadDOM extends CreateDOM {
 }
 
 class ReplyInputDOM extends CreateDOM {
-    constructor(inId, inParentId, inParentUserName, inTextAreaId){
+    constructor(inId, inParentId, inParentUserName){
         super();
         this.id = inId;
         this.parentId = inParentId;
         this.parentUserName = inParentUserName;
-        this.textAreaId = inTextAreaId;
+        this.textAreaId = `replyTo_${inParentUserName}_${inParentId}`;
         this.sectionDOM = {};
         this.createReplyInput();
         
@@ -269,6 +424,7 @@ class ReplyInputDOM extends CreateDOM {
                 case "sendReply":
                     element.dataset.type = "sendReply";
                 break;
+                
             } 
             element.appendChild(iconElement);
         }
@@ -302,4 +458,4 @@ class ReplyInputDOM extends CreateDOM {
 
 }
 
-export { CommentDOM, ReplyDOM,  ReplyThreadDOM, ReplyInputDOM };
+export { CommentDOM, ReplyDOM,  ReplyThreadDOM, ReplyInputDOM, EditableReplyDOM };
