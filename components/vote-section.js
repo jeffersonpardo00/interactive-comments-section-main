@@ -4,7 +4,7 @@ class voteSection extends HTMLElement
     constructor(){
         super();
         this.attachShadow({mode:"open"});
-        //this.score = 10;
+        this.hasVoted = false;
     }
 
     static get observedAttributes(){
@@ -52,12 +52,19 @@ class voteSection extends HTMLElement
         this.scoreDom.innerHTML=this.score;
     }
 
+
     handleEvent(event) {
 
         if (event.type === "click")
         {
-            if(event.target.id==='vote') this.score++;
-            if(event.target.id==='unvote') this.score--;
+            if(event.target.id==='vote' && !this.hasVoted){
+                this.score++;
+                this.hasVoted = true;
+            } 
+            if(event.target.id==='unvote' && this.hasVoted){
+                this.score--;
+                this.hasVoted = false;
+            } 
             this.redrawScore();
         }
         

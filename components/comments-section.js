@@ -11,19 +11,27 @@ class commentsSection extends HTMLElement
         return ['fetched'];
     }
 
-    appendComments(){
-        this.sortComments();
-        this._comments.forEach((comment) => {
-            const commentElement =   document.createElement("comment-component");
-            commentElement.setAttribute("score",comment.score);
-            this.shadowRoot.appendChild(commentElement);
-        });
-
+    set comments(value) {
+        this._comments = value;
+    }
+    set currentUser(value) {
+        this._currentUser = value;
     }
 
     sortComments(){
         this._comments.sort((a,b)=>{
             return b.score - a.score;
+        });
+    }
+
+    appendComments(){
+        this.sortComments();
+        this._comments.forEach((comment) => {
+            const commentElement =   document.createElement("comment-component");
+            commentElement.comment = comment;
+            commentElement.currentUser = this._currentUser;
+            commentElement.setAttribute("initialized","1");
+            this.shadowRoot.appendChild(commentElement);
         });
     }
 
@@ -35,12 +43,7 @@ class commentsSection extends HTMLElement
         }
     }
 
-    set comments(value) {
-        this._comments = value;
-    }
-    set currentUser(value) {
-        this._currentUser = value;
-    }
+   
 
     getTemplate(){
         let template = document.createElement("template");
