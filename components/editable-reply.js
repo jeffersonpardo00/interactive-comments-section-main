@@ -7,20 +7,8 @@ class EditableReply extends HTMLElement
         this.attachShadow({mode:"open"});
     }
 
-    static get observedAttributes(){
-        return ['initialized'];
-    }
-
     set reply(value) {
         this._reply = value;
-    }
-   
-    attributeChangedCallback(name, oldValue, newValue){
-        if (name==="initialized"){
-            if(newValue==='1'){
-                console.log("entro");
-            }
-        }
     }
 
     getTemplate(){
@@ -47,7 +35,7 @@ class EditableReply extends HTMLElement
                 </div>
             </header>
             <p class="comment__content">
-                <span class="comment__replyingTo">@${this._reply.user.replyingTo}</span>
+                <span class="comment__replyingTo">@${this._reply.replyingTo}</span>
                 ${this._reply.content}
             </p> 
             <footer class="comment__footer">

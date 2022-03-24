@@ -84,6 +84,10 @@ class voteSection extends HTMLElement
         this.inicializeDOMElements();
     }
 
+    disconnectedCallback() {
+        this.shadowRoot.removeEventListener("click", this);
+    }
+
 
 }
 

@@ -7,27 +7,15 @@ class Reply extends HTMLElement
         this.attachShadow({mode:"open"});
     }
 
-    static get observedAttributes(){
-        return ['initialized'];
-    }
-
     set reply(value) {
         this._reply = value;
-    }
-   
-    attributeChangedCallback(name, oldValue, newValue){
-        if (name==="initialized"){
-            if(newValue==='1'){
-                console.log("entro");
-            }
-        }
     }
 
     getTemplate(){
         let template = document.createElement("template");
         template.innerHTML = 
         `
-        <article class="comment">
+        <article id="reply_${this._reply.id}" class="comment">
             <header class="comment__header">
                 <div class="comment__title">
                     <div class="comment__user">
@@ -46,7 +34,7 @@ class Reply extends HTMLElement
                 </div>
             </header>
             <p class="comment__content">
-                <span class="comment__replyingTo">@${this._reply.user.replyingTo}</span>
+                <span class="comment__replyingTo">@${this._reply.replyingTo}</span>
                 ${this._reply.content}
             </p> 
             <footer class="comment__footer">
@@ -54,7 +42,7 @@ class Reply extends HTMLElement
                     <vote-section id="vote" score="${this._reply.score}"></vote-section>
                 </div>
                 <div class="comment__reply">
-                    <button class="comment__reply-botton">Reply</button>
+                    <button id="reply-botton_${this._reply.id}" class="comment__reply-botton">Reply</button>
                 </div>
             </footer>
             
@@ -74,12 +62,36 @@ class Reply extends HTMLElement
         `;
     }
 
+    replyThisReply(){
+        
+        const replyEvent = new CustomEvent("replyEvent", {
+            detail: {
+                id: this._reply.id,
+                username:  this._reply.user.username
+            },
+            bubbles: true,
+            composed: true
+          });
+
+       this.dispatchEvent(replyEvent);
+    }
+
+    inicializeDOMElements(){
+        this.replyButton = this.shadowRoot.querySelector(`#reply-botton_${this._reply.id}`);
+        this.replyButton.onclick = () => this.replyThisReply();
+    }
+
     render(){
         this.shadowRoot.appendChild(this.getTemplate().content.cloneNode(true));
     }
 
     connectedCallback(){
         this.render();
+        this.inicializeDOMElements();
+    }
+
+    disconnectedCallback() {
+        this.replyButton.onclick = null;
     }
 
 }

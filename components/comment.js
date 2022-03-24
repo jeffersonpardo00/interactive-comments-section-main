@@ -1,6 +1,7 @@
 import "./vote-section.js";
 import "./reply.js";
 import "./reply-input.js";
+import "./editable-reply.js";
 
 class Comment extends HTMLElement
 {
@@ -9,49 +10,8 @@ class Comment extends HTMLElement
         this.attachShadow({mode:"open"});
     }
 
-    static get observedAttributes(){
+    /*static get observedAttributes(){
         return ['initialized'];
-    }
-
-    set comment(value) {
-        this._comment = value;
-        this._replies = value.replies;
-    }
-
-    set currentUser(value) {
-        this._currentUser = value;
-    }
-
-   /* getRepliesSection(){
-        return this.shadowRoot.querySelector("#replies");
-    }*/
-
-    sortReplies(){
-        this._replies.sort((a,b)=>{
-            return b.score - a.score;
-        });
-    }
-
-    appendComments(){
-        this.sortReplies();
-        this._replies.forEach((reply) => {
-            const replyElement =   document.createElement("reply-component");
-            replyElement.reply = reply;
-           this.RepliesSection.appendChild(replyElement);
-            replyElement.setAttribute("initialized","1");
-        });
-    }
-   
-    replyThisComment(){
-
-       const replyInput= document.createElement("reply-input");
-       //console.log(this._currentUser);
-       replyInput.currentUser = this.currentUser;
-       replyInput.replyingTo = this._comment.username;
-       console.log(replyInput);
-       this.RepliesSection.appendChild(replyInput);
-       
-       replyInput.setAttribute("initialized","1");
     }
 
     attributeChangedCallback(name, oldValue, newValue){
@@ -61,8 +21,8 @@ class Comment extends HTMLElement
                 
             }
         }
-    }
-
+    }*/
+    
     getTemplate(){
         let template = document.createElement("template");
         template.innerHTML = 
@@ -95,12 +55,13 @@ class Comment extends HTMLElement
                             <vote-section id="vote" score="${this._comment.score}"></vote-section>
                         </div>
                         <div class="comment__reply">
-                            <button class="comment__reply-botton">Reply</button>
+                            <button id="reply-botton_${this._comment.id}" class="comment__reply-botton">Reply</button>
                         </div>
                     </footer>
                 </article> 
             </section>
-            <section id="replies" class="replies">
+            <section id="replies_${this._comment.id}" class="replies">
+               
             </section>
         </section>
             ${this.getStyles()}
@@ -118,21 +79,106 @@ class Comment extends HTMLElement
         `;
     }
 
+    set comment(value) {
+        this._comment = value;
+        this._replies = value.replies;
+    }
+
+    set currentUser(value) {
+        this._currentUser = value;
+    }
+
+    getRepliesSection(){
+        return this.shadowRoot.querySelector(`#replies_${this._comment.id}`);
+    }
+
+    sortReplies(){
+        this._replies.sort((a,b)=>{
+            return b.score - a.score;
+        });
+    }
+
+    appendReplies(){
+        this.sortReplies();
+        this._replies.forEach((reply) => {
+            const replyElement =   document.createElement("reply-component");
+            replyElement.reply = reply;
+            this.getRepliesSection().appendChild(replyElement);
+            replyElement.setAttribute("initialized","1");
+        });
+    }
+   
+    replyThisComment(){
+
+        const replyInput= document.createElement("reply-input");
+        replyInput.currentUser = this._currentUser;
+        replyInput.replying ={id:this._comment.id , username:this._comment.user.username};
+        this.getRepliesSection().appendChild(replyInput);
+
+    }
+
+    replyAReply(toReply){
+
+        const replyInput= document.createElement("reply-input");
+        replyInput.currentUser = this._currentUser;
+        replyInput.replying = toReply;
+        this.getRepliesSection().appendChild(replyInput);
+
+    }
+
+    handleEvent(event) {
+
+        if (event.type === "replySended")
+        {
+            event.target.remove();
+            this.createEditableReply(event.detail);
+        }
+        if (event.type === "replyEvent")
+        {
+            this.replyAReply(event.detail);
+        }
+        
+    }  
+
+    createEditableReply(replySended){
+
+        const reply = 
+        {
+            id: 3,
+            content: replySended.reply,
+            createdAt: "today",
+            score: 0,
+            replyingTo: replySended.replyingTo,
+            user: this._currentUser
+        };
+        
+        const EditableReply = document.createElement("editable-reply");
+        EditableReply.reply = reply;
+        this.getRepliesSection().appendChild(EditableReply);
+    }
+
+    inicializeDOMElements(){
+        this.replyButton = this.shadowRoot.querySelector(`#reply-botton_${this._comment.id}`);
+        this.replyButton.onclick = () => this.replyThisComment();
+        this.shadowRoot.addEventListener("replyEvent", this);
+        this.shadowRoot.addEventListener("replySended", this);
+    }
+
     render(){
         this.shadowRoot.appendChild(this.getTemplate().content.cloneNode(true));
-        
-        this.RepliesSection = this.shadowRoot.querySelector("#replies");
-       // this.appendComments();
-
-        this.replyButton = this.shadowRoot.querySelector("button");
-        this.replyButton.onclick = () => this.replyThisComment();
-
-
+        this.appendReplies();
     }
 
     connectedCallback(){
         //console.log('hola Mundo!');
         this.render();
+        this.inicializeDOMElements();
+    }
+
+    disconnectedCallback() {
+        this.replyButton.onclick = null;
+        this.shadowRoot.removeEventListener("replyEvent", this);
+        this.shadowRoot.removeEventListener("replySended", this);
     }
 
 }
