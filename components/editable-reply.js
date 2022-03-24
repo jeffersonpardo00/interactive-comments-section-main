@@ -5,6 +5,7 @@ class EditableReply extends HTMLElement
     constructor(){
         super();
         this.attachShadow({mode:"open"});
+
     }
 
     set reply(value) {
@@ -15,40 +16,43 @@ class EditableReply extends HTMLElement
         let template = document.createElement("template");
         template.innerHTML = 
         `
-        <article class="comment">
-            <header class="comment__header">
-                <div class="comment__title">
-                    <div class="comment__user">
-                        <div class="comment__photo">
-                            <img class="comment__photo-img"
-                             src="${this._reply.user.image.png}" 
-                             alt="photo of ${this._reply.user.username}">
+            <article id="reply_${this._reply.id}" class="comment">
+                <header class="comment__header">
+                    <div class="comment__title">
+                        <div class="comment__user">
+                            <div class="comment__photo">
+                                <img class="comment__photo-img"
+                                src="${this._reply.user.image.png}" 
+                                alt="photo of ${this._reply.user.username}">
+                            </div>
+                            <h3 class="comment__name">
+                                ${this._reply.user.username}
+                            </h3>
                         </div>
-                        <h3 class="comment__name">
-                            ${this._reply.user.username}
-                        </h3>
-                        <span class="comment__you">you</span>
+                        <p class="comment__date">
+                            ${this._reply.createdAt}
+                        </p>
                     </div>
-                    <p class="comment__date">
-                        ${this._reply.createdAt}
-                    </p>
+                </header>
+
+                <section id="reply-main_${this._reply.id}" class="comment__main">
+                    <p id="content_${this._reply.id}" class="comment__content"><span class="comment__replyingTo">@${this._reply.replyingTo}</span>${this._reply.content}</p> 
+                </section>
+                
+                <div class="comment__actions">
+                        <button id="edit-botton_${this._reply.id}" class="comment__edit-botton">edit</button>
+                        <button id="delete-botton_${this._reply.id}" class="comment__edit-botton">delete</button>
                 </div>
-            </header>
-            <p class="comment__content">
-                <span class="comment__replyingTo">@${this._reply.replyingTo}</span>
-                ${this._reply.content}
-            </p> 
-            <footer class="comment__footer">
-                <div class="comment__score">
-                    <vote-section id="vote" score="${this._reply.score}"></vote-section>
-                </div>
-                <div class="comment__reply">
-                    <button class="comment__delete-botton">Delete</button>
-                    <button class="comment__edit-botton">Edit</button>
-                </div>
-            </footer>
-            
-        </article> 
+                <footer class="comment__footer">
+                    <div class="comment__score">
+                        <vote-section id="vote" score="${this._reply.score}"></vote-section>
+                    </div>
+                    <div class="comment__update">
+                        <button id="update-botton_${this._reply.id}" class="comment__edit-botton">Update</button>
+                    </div>
+                </footer>
+                
+            </article> 
             ${this.getStyles()}
         `;
         return template;
@@ -64,12 +68,61 @@ class EditableReply extends HTMLElement
         `;
     }
 
+    deleteThisReply(){
+        
+        const deleteReplyEvent = new CustomEvent("deleteReply", {
+            bubbles: true,
+            composed: true
+          });
+
+       this.dispatchEvent(deleteReplyEvent);
+    }
+
+    editThisReply(){
+
+        const mainElement = this.shadowRoot.querySelector(`#reply-main_${this._reply.id}`);
+        mainElement.innerHTML =`
+        <p id="editable-content_${this._reply.id}" class="comment__editable-content">
+            <span class="comment__replyingTo">@${this._reply.replyingTo}</span>
+            <textarea name="reply__TextArea_${this._reply.id}" id="reply-TextArea_${this._reply.id}" cols="30" rows="10">${this._reply.content}</textarea>
+        </p> 
+        `;
+
+    }
+
+    updateThisReply(){
+        this._reply.content = this.shadowRoot.querySelector(`#reply-TextArea_${this._reply.id}`).value;
+        const mainElement = this.shadowRoot.querySelector(`#reply-main_${this._reply.id}`);
+        mainElement.innerHTML =`
+        <p id="content_${this._reply.id}" class="comment__content">
+            <span class="comment__replyingTo">@${this._reply.replyingTo}</span>
+            ${this._reply.content}
+        </p> 
+        `;
+
+    }
+
+    inicializeDOMElements(){
+        this.deleteButton = this.shadowRoot.querySelector(`#delete-botton_${this._reply.id}`);
+        this.deleteButton.onclick = () => this.deleteThisReply();
+        this.editButton = this.shadowRoot.querySelector(`#edit-botton_${this._reply.id}`);
+        this.editButton.onclick = () => this.editThisReply();
+        this.updateButton = this.shadowRoot.querySelector(`#update-botton_${this._reply.id}`);
+        this.updateButton.onclick = () => this.updateThisReply();
+    }
+
     render(){
         this.shadowRoot.appendChild(this.getTemplate().content.cloneNode(true));
     }
 
     connectedCallback(){
         this.render();
+        this.inicializeDOMElements();
+    }
+
+    disconnectedCallback() {
+        this.deleteButton.onclick = null;
+        this.editButton.onclick = null;
     }
 
 }

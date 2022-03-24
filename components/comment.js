@@ -137,6 +137,10 @@ class Comment extends HTMLElement
         {
             this.replyAReply(event.detail);
         }
+        if (event.type === "deleteReply")
+        {
+            event.target.remove();
+        }
         
     }  
 
@@ -162,6 +166,7 @@ class Comment extends HTMLElement
         this.replyButton.onclick = () => this.replyThisComment();
         this.shadowRoot.addEventListener("replyEvent", this);
         this.shadowRoot.addEventListener("replySended", this);
+        this.shadowRoot.addEventListener("deleteReply", this);
     }
 
     render(){
@@ -179,6 +184,7 @@ class Comment extends HTMLElement
         this.replyButton.onclick = null;
         this.shadowRoot.removeEventListener("replyEvent", this);
         this.shadowRoot.removeEventListener("replySended", this);
+        this.shadowRoot.removeEventListener("deleteReply", this);
     }
 
 }
