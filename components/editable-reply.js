@@ -39,7 +39,7 @@ class EditableReply extends HTMLElement
                     <p id="content_${this._reply.id}" class="comment__content"><span class="comment__replyingTo">@${this._reply.replyingTo}</span>${this._reply.content}</p> 
                 </section>
                 
-                <div class="comment__actions">
+                <div id="editReplyActions_${this._reply.id}" class="comment__actions">
                         <button id="edit-botton_${this._reply.id}" class="comment__edit-botton">edit</button>
                         <button id="delete-botton_${this._reply.id}" class="comment__edit-botton">delete</button>
                 </div>
@@ -47,8 +47,8 @@ class EditableReply extends HTMLElement
                     <div class="comment__score">
                         <vote-section id="vote" score="${this._reply.score}"></vote-section>
                     </div>
-                    <div class="comment__update">
-                        <button id="update-botton_${this._reply.id}" class="comment__edit-botton">Update</button>
+                    <div id="updateSection_${this._reply.id}" class="comment__update hide-section">
+                        <button id="update-botton_${this._reply.id}" class="comment__update-botton">Update</button>
                     </div>
                 </footer>
                 
@@ -61,8 +61,8 @@ class EditableReply extends HTMLElement
     getStyles(){
         return `
         <style>
-            .hola {
-                color: red;
+            .hide-section {
+                display: none;
             }
         </style>
         `;
@@ -78,6 +78,13 @@ class EditableReply extends HTMLElement
        this.dispatchEvent(deleteReplyEvent);
     }
 
+    toogleUpdateEdit(){
+        const actionsElement = this.shadowRoot.querySelector(`#editReplyActions_${this._reply.id}`);
+        actionsElement.classList.toggle("hide-section");
+        const updateElement = this.shadowRoot.querySelector(`#updateSection_${this._reply.id}`);
+        updateElement.classList.toggle("hide-section");
+    }
+
     editThisReply(){
 
         const mainElement = this.shadowRoot.querySelector(`#reply-main_${this._reply.id}`);
@@ -87,7 +94,7 @@ class EditableReply extends HTMLElement
             <textarea name="reply__TextArea_${this._reply.id}" id="reply-TextArea_${this._reply.id}" cols="30" rows="10">${this._reply.content}</textarea>
         </p> 
         `;
-
+        this.toogleUpdateEdit();
     }
 
     updateThisReply(){
@@ -99,7 +106,7 @@ class EditableReply extends HTMLElement
             ${this._reply.content}
         </p> 
         `;
-
+        this.toogleUpdateEdit();
     }
 
     inicializeDOMElements(){
