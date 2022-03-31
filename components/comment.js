@@ -10,19 +10,6 @@ class Comment extends HTMLElement
         this.attachShadow({mode:"open"});
     }
 
-    /*static get observedAttributes(){
-        return ['initialized'];
-    }
-
-    attributeChangedCallback(name, oldValue, newValue){
-        if (name==="initialized"){
-            if(newValue==='1'){
-           //     console.log("initialized");
-                
-            }
-        }
-    }*/
-    
     getTemplate(){
         let template = document.createElement("template");
         template.innerHTML = 
@@ -31,7 +18,7 @@ class Comment extends HTMLElement
             <section class="comment-main">
                 <article id="comment_${this._comment.id}" class="comment">
                     <header class="comment__header">
-                        <div class="comment__title">
+                     
                             <div class="comment__user">
                                 <div class="comment__photo">
                                     <img class="comment__photo-img"
@@ -45,18 +32,19 @@ class Comment extends HTMLElement
                             <p class="comment__date">
                                 ${this._comment.createdAt}
                             </p>
-                        </div>
+                       
                     </header>
                     <p class="comment__content">
                         ${this._comment.content}
                     </p> 
+                    <aside class="comment__aside">
+                        <vote-section comment-id="${this._comment.id}" score="${this._comment.score}"></vote-section>
+                    </aside>
                     <footer class="comment__footer">
-                        <div class="comment__score">
-                            <vote-section id="vote" score="${this._comment.score}"></vote-section>
-                        </div>
-                        <div class="comment__reply">
-                            <button id="reply-botton_${this._comment.id}" class="comment__reply-botton">Reply</button>
-                        </div>
+                        <button id="reply-botton_${this._comment.id}" class="comment__reply-botton">
+                            <img class="comment__reply-icon" src="./images/icon-reply.svg" alt="reply icon">
+                            <span class="comment__reply-text">Reply</span>
+                        </button>
                     </footer>
                 </article> 
             </section>
@@ -64,6 +52,8 @@ class Comment extends HTMLElement
                
             </section>
         </section>
+
+        
             ${this.getStyles()}
         `;
         return template;
@@ -71,10 +61,123 @@ class Comment extends HTMLElement
 
     getStyles(){
         return `
+        
         <style>
-            .replies {
-                background-color: grey;
+
+            *{
+                box-sizing: border-box;
             }
+            :host{
+            }
+            p{
+                margin:0;
+            }
+            .comment{
+                background-color: white;
+                padding: 1.5em;
+                margin-bottom: 1em;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                grid-template-rows: auto;
+                grid-template-areas: 
+                    "header header"
+                    "main main"
+                    "aside footer";
+                border-radius: 0.3em;
+           
+            }
+            .replies {
+                padding-left: 3em;
+                position: relative;
+            }
+            .replies::before {
+                display: block;
+                background-color: var(--ligth-letter-color);
+                width: 3px;
+                height: 100%;
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 1.5em;
+            }
+            .comment__header{
+                display: flex;
+                align-items: center;
+                grid-area: header;
+            }
+            .comment__user
+            {
+                display: flex;
+                align-items: center;
+            }
+            .comment__name
+            {
+                margin: 0;
+                padding: 0 0.5em;
+                color: var(--title-letter-color);
+                font-size: 1em;
+            }
+            .comment__photo
+            {
+                width: 2em;
+            }
+            .comment__photo-img{
+                width: 100%;
+            }
+            .comment__content{
+                grid-area: main;
+                color: var(--content-letter-color);
+                line-height: 1.5em;
+                padding: 1em 0;
+            }
+            .comment__aside{
+                grid-area: aside;
+                display: flex;
+                align-items: center;
+            }
+            .comment__footer{
+                grid-area: footer;
+                display: flex;
+                justify-content: flex-end;
+                align-items: center;
+            }
+            .comment__date{
+                color: var(--content-letter-color);
+            }
+
+            .comment__reply-botton{
+                background: none;
+                border: none;
+                color: var(--functional-letter-color);
+                cursor: pointer;
+            }
+
+            .comment__reply-text{
+                font-family: var(--primary-font);
+                font-weight: 500;
+                font-size: 1.17em;
+            }
+
+            .comment__reply-icon{
+                width: 0.85em;
+                margin-right: 0.2em;
+            }
+            .comment__reply-botton:hover *{
+                opacity: 0.7;
+            }
+
+            @media (min-width: 375px) {
+                .comment{
+                    grid-template-columns: 3em 3fr 1fr;
+                    grid-template-areas: 
+                        "aside header footer"
+                        "aside main main";
+                }
+                .comment__content{
+                    padding: 0;
+                }
+            }
+
         </style>
         `;
     }
