@@ -1,12 +1,13 @@
-class ReplyInput extends HTMLElement
+class commentInput extends HTMLElement
 {
     constructor(){
         super();
         this.attachShadow({mode:"open"});
+    
     }
 
-    set replying(value) {
-        this._replying = value;
+    set id(value) {
+        this._id = value;
     }
 
     set currentUser(value) {
@@ -17,20 +18,20 @@ class ReplyInput extends HTMLElement
         let template = document.createElement("template");
         template.innerHTML = 
         `
-        <article id="replyInputTo_${this._replying.id}" class="reply-input">
-            <header class="reply-input__header">
-                <div class="reply-input__photo">
-                    <img class="reply-input__photo-img" src="${this._currentUser.image.png}" alt="photo of ${this._currentUser.username}">
-                </div>
-            </header>
-            <p class="reply-input__content">
-                <textarea class="reply-input__textarea" name="replyTextArea_${this._replying.id}" id="replyTextArea_${this._replying.id}" 
-                cols="30" rows="3">@${this._replying.username} </textarea>
-            </p> 
-            <footer class="reply-input__footer">
-                    <button id="send-botton_${this._replying.id}" class="reply-input__send-botton">REPLY</button>
-            </footer>
-        </article> 
+            <article id="commentInput_${this._id}" class="comment-input">
+                <header class="comment-input__header">
+                    <div class="comment-input__photo">
+                        <img class="comment-input__photo-img" src="${this._currentUser.image.png}" alt="photo of ${this._currentUser.username}">
+                    </div>
+                </header>
+                <p class="comment-input__content">
+                    <textarea class="comment-input__textarea" name="commentTextArea_${this._id}" id="commentTextArea_${this._id}" 
+                    placeholder="add a comment..." cols="30" rows="3"></textarea>
+                </p> 
+                <footer class="comment-input__footer">
+                        <button id="send-botton_${this._id}" class="comment-input__send-botton">REPLY</button>
+                </footer>
+            </article> 
             ${this.getStyles()}
         `;
 
@@ -45,7 +46,7 @@ class ReplyInput extends HTMLElement
                 margin: 0;
                 padding: 0;
             }
-            .reply-input {
+            .comment-input {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
                 grid-template-rows: auto;
@@ -58,23 +59,23 @@ class ReplyInput extends HTMLElement
                     "header footer";
                     
             }
-            .reply-input__header
+            .comment-input__header
             {
                 grid-area: header;
             }
-            .reply-input__photo{
+            .comment-input__photo{
                 width: 3em;
                 padding: 0.3em;
             }
-            .reply-input__photo-img{
+            .comment-input__photo-img{
                 width: 100%;
             }
-            .reply-input__content
+            .comment-input__content
             {
                 grid-area: main;
                 padding: 0.5em;
             }
-            .reply-input__textarea
+            .comment-input__textarea
             {
                 width: 100%;
                 padding: 0.5em;
@@ -83,7 +84,7 @@ class ReplyInput extends HTMLElement
                 resize: none;
                 border-color: var(--strong-letter-color);
             }
-            .reply-input__footer
+            .comment-input__footer
             {
                 grid-area: footer;
                 display: flex;
@@ -91,7 +92,7 @@ class ReplyInput extends HTMLElement
                 align-items: flex-start;
                 padding: 0.5em 0;
             }
-            .reply-input__send-botton
+            .comment-input__send-botton
             {
                 border: none;
                 color: white;
@@ -105,11 +106,11 @@ class ReplyInput extends HTMLElement
                 cursor: pointer;
             }
             @media (min-width: 375px) {
-                .reply-input {
+                .comment-input {
                     grid-template-columns: 3em 1fr 6em;
                     grid-template-areas: "header main footer";
                 }
-                .reply-input__photo{
+                .comment-input__photo{
                     width: 100%;
                 }
                 
@@ -118,26 +119,27 @@ class ReplyInput extends HTMLElement
         `;
     }
 
-    sendReply(){
-        
-        const replyTextAreaValue = this.shadowRoot.querySelector(`#replyTextArea_${this._replying.id}`).value.replace(`@${this._replying.username} `, '');
-        const replySended = new CustomEvent("replySended", {
+    sendComment(){
+        const commentTextArea = this.shadowRoot.querySelector(`#commentTextArea_${this._id}`);
+        const commentTextAreaValue = commentTextArea.value;
+        const commentSended = new CustomEvent("commentSended", {
             detail: {
-                replyingTo:  this._replying.username,
-                reply: replyTextAreaValue
+                comment: commentTextAreaValue
             },
             bubbles: true,
             composed: true
           });
 
-       this.dispatchEvent(replySended);
+       this.dispatchEvent(commentSended);
+       commentTextArea.value='';
     }
 
+   
     render(){
         this.shadowRoot.appendChild(this.getTemplate().content.cloneNode(true));
 
-        this.sendButton = this.shadowRoot.querySelector(`#send-botton_${this._replying.id}`);
-        this.sendButton.onclick = () => this.sendReply();
+        this.sendButton = this.shadowRoot.querySelector(`#send-botton_${this._id}`);
+        this.sendButton.onclick = () => this.sendComment();
 
     }
 
@@ -152,4 +154,4 @@ class ReplyInput extends HTMLElement
 
 }
 
-customElements.define('reply-input',ReplyInput);
+customElements.define('comment-input',commentInput);

@@ -2,6 +2,7 @@ import "./vote-section.js";
 import "./reply.js";
 import "./reply-input.js";
 import "./editable-reply.js";
+import "./modal-prompt.js";
 
 class Comment extends HTMLElement
 {
@@ -166,6 +167,11 @@ class Comment extends HTMLElement
                 opacity: 0.7;
             }
 
+            modal-prompt{
+                --acept-color: hsl(358, 79%, 66%);
+                --cancel-color: var(--content-letter-color);
+            }
+
             @media (min-width: 375px) {
                 .comment{
                     grid-template-columns: 3em 3fr 1fr;
@@ -229,6 +235,16 @@ class Comment extends HTMLElement
 
     }
 
+    appendDeletePrompt(){
+        const modalPrompt = document.createElement("modal-prompt");
+        modalPrompt.title = 'Delete comment';
+        modalPrompt.text = `Are you sure you want to delete this comment? This will
+        remove the comment and can't be undone`;
+        modalPrompt.aceptTextBut = 'YES, DELETE';
+        modalPrompt.cancelTextBut = 'NO, CANCEL';
+        this.shadowRoot.appendChild(modalPrompt);
+    }
+
     handleEvent(event) {
 
         if (event.type === "replySended")
@@ -242,6 +258,14 @@ class Comment extends HTMLElement
         }
         if (event.type === "deleteReply")
         {
+            this.appendDeletePrompt();
+            this.deleteTarget = event.target;
+        }
+        if(event.type === "promptResponse"){
+            if(event.detail.response){
+                this.deleteTarget.remove()
+            }
+         //   console.log(event.target);
             event.target.remove();
         }
         
@@ -270,6 +294,7 @@ class Comment extends HTMLElement
         this.shadowRoot.addEventListener("replyEvent", this);
         this.shadowRoot.addEventListener("replySended", this);
         this.shadowRoot.addEventListener("deleteReply", this);
+        this.shadowRoot.addEventListener("promptResponse", this);
     }
 
     render(){
@@ -288,6 +313,7 @@ class Comment extends HTMLElement
         this.shadowRoot.removeEventListener("replyEvent", this);
         this.shadowRoot.removeEventListener("replySended", this);
         this.shadowRoot.removeEventListener("deleteReply", this);
+        this.shadowRoot.removeEventListener("promptResponse", this);
     }
 
 }
