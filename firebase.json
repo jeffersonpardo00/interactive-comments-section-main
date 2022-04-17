@@ -1,0 +1,10 @@
+{
+  "hosting": {
+    "public": "dist/comments-section",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ]
+  }
+}
